@@ -5,8 +5,8 @@
 ;; Author: Abdelhak Bougouffa (rot13 "nobhtbhssn@srqbencebwrpg.bet")
 ;; URL: https://github.com/abougouffa/one-tab-per-project
 ;; Created: July 07, 2024
-;; Modified: June 15, 2025
-;; Version: 3.3.6
+;; Modified: Jan 25, 2026
+;; Version: 3.3.7
 ;; Package-Requires: ((emacs "28.1") (compat "29.1"))
 ;; Keywords: convenience
 ;; SPDX-License-Identifier: GPL-3.0
@@ -200,6 +200,15 @@ project that includes this path."
   :group 'otpp
   :type '(choice function (symbol nil))
   :version "1.1.0")
+
+(defcustom otpp-project-name-use-directory nil
+  "Whether to use `project-name' function for naming projects.
+
+When non-nil, use directory names directly, bypassing project.el.
+When nil, use the `project-name' function to get project names."
+  :group 'otpp
+  :type 'boolean
+  :version "3.3.7")
 
 (defcustom otpp-allow-detach-projectless-buffer nil
   "Allow detaching a buffer to a new tab even if it is projectless.
@@ -510,7 +519,7 @@ Then, this function checks in this order:
 
 1. If the local variable `otpp-project-name' is set locally in the
 `dir-locals-file', use it as project name.
-2. Same with the local variable `project-vc-name'.
+2. If `otpp-project-name-use-directory' is nil, call `project-name' function.
 3. Return the directory name of the project's root.
 
 When DIR isn't part of any project, returns nil."
@@ -532,7 +541,10 @@ When DIR isn't part of any project, returns nil."
            (cl-some (lambda (var)
                       (or (alist-get var dir-local-variables-alist)
                           (alist-get var file-local-variables-alist)))
-                    '(otpp-project-name project-vc-name)))
+                    '(otpp-project-name)))
+          (and
+            (not otpp-project-name-use-directory)
+            (project-name proj))
           (file-name-nondirectory (directory-file-name root))))))
 
 (defun otpp-find-tabs-by-root-dir (dir)
